@@ -1,14 +1,17 @@
-﻿Построение начато 20.04.2015 14:56:53.
+﻿Построение начато 21.04.2015 22:38:42.
      1>Проект "E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Virtual CD-ROM\Virtual CD-ROM.vcxproj" в узле 2 (целевые объекты Build).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /AI"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\\" /AI"C:\Program Files (x86)\Windows Kits\8.0\References\CommonConfiguration\Neutral" /AI"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\Facades\\" /Zi /clr /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _UNICODE /D UNICODE /EHa /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /TP /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\mscorlib.dll" /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Data.dll" /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.dll" /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Drawing.dll" /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Windows.Forms.dll" /FU"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Xml.dll" /analyze- /errorReport:prompt /clr:nostdlib MainForm.cpp
          MainForm.cpp
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Debug\Virtual CD-ROM.exe" /INCREMENTAL /NOLOGO /ASSEMBLYRESOURCE:Debug\VirtualCDROM.MainForm.resources /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Debug\Virtual CD-ROM.pdb" /ASSEMBLYDEBUG /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"Main" /DYNAMICBASE /FIXED:NO /NXCOMPAT /MACHINE:X86 Debug\MainForm.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Debug\Virtual CD-ROM.exe" /INCREMENTAL /NOLOGO /ASSEMBLYRESOURCE:Debug\VirtualCDROM.AboutForm.resources /ASSEMBLYRESOURCE:Debug\VirtualCDROM.AddForm.resources /ASSEMBLYRESOURCE:Debug\VirtualCDROM.ExtendSizeForm.resources /ASSEMBLYRESOURCE:Debug\VirtualCDROM.MainForm.resources /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Debug\Virtual CD-ROM.pdb" /ASSEMBLYDEBUG /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"Main" /DYNAMICBASE /FIXED:NO /NXCOMPAT /MACHINE:X86 Debug\AboutForm.obj
+         Debug\AddForm.obj
+         Debug\ExtendSizeForm.obj
+         Debug\MainForm.obj
          "Debug\.NETFramework,Version=v4.5.AssemblyAttributes.obj"
          Virtual CD-ROM.vcxproj -> E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Debug\Virtual CD-ROM.exe
      1>Построение проекта "E:\Для учебы\СПО ВМ\КУРСОВОЙ\programm\VirtualCD-ROM\Virtual CD-ROM\Virtual CD-ROM\Virtual CD-ROM.vcxproj" завершено (целевые объекты Build).
 
 Построение успешно завершено.
 
-Затраченное время: 00:00:00.70
+Затраченное время: 00:00:01.39
