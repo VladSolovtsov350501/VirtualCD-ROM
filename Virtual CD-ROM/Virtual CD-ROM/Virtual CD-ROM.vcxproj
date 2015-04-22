@@ -80,6 +80,7 @@
   <ItemGroup>
     <ClCompile Include="AboutForm.cpp" />
     <ClCompile Include="AddForm.cpp" />
+    <ClCompile Include="Driver.cpp" />
     <ClCompile Include="ExtendSizeForm.cpp" />
     <ClCompile Include="MainForm.cpp" />
   </ItemGroup>
