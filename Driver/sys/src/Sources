@@ -1,0 +1,6 @@
+TARGETNAME=vcdrom
+TARGETPATH=..\obj\$(DDKBUILDENV)
+TARGETTYPE=DRIVER
+INCLUDES=..\inc
+TARGETLIBS=$(SDK_LIB_PATH)\wdmsec.lib
+SOURCES=vcdrom.c vcdrom.rc
