@@ -34,5 +34,4 @@ typedef struct _OPEN_FILE_INFORMATION {
     USHORT          FileNameLength;
     UCHAR           FileName[1];
 } OPEN_FILE_INFORMATION, *POPEN_FILE_INFORMATION;
-
 #endif

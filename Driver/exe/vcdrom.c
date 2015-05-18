@@ -13,9 +13,8 @@
 void PrintMenu()
 {
     fprintf(stderr, "Menu:\n");
-    fprintf(stderr, "vcdrom /mount  <devicenumber> <filename> [size[k|M|G] | /ro | /cd] <drive:>\n");
+    fprintf(stderr, "vcdrom /mount  <devicenumber> <filename> <drive:>\n");
     fprintf(stderr, "vcdrom /unmount <drive:>\n");
-    fprintf(stderr, "vcdrom /status <drive:>\n");
     fprintf(stderr, "\n");
 }
 
@@ -42,7 +41,6 @@ int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BO
     DriveName[0] = OpenFileInformation->DriveLetter;
 
     Device = CreateFile(VolumeName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
-
     if (Device != INVALID_HANDLE_VALUE)
     {
         CloseHandle(Device);
@@ -51,10 +49,7 @@ int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BO
         return -1;
     }
 
-    if (CdImage)
-        sprintf(DeviceName, DEVICE_NAME_PREFIX "Cd" "%u", DeviceNumber);
-    else
-        sprintf(DeviceName, DEVICE_NAME_PREFIX "%u", DeviceNumber);
+    sprintf(DeviceName, DEVICE_NAME_PREFIX "Cd" "%u", DeviceNumber);
 
     if (!DefineDosDevice(DDD_RAW_TARGET_PATH, &VolumeName[4], DeviceName))
     {
@@ -145,51 +140,6 @@ int VCDromUnmount(char DriveLetter)
     return 0;
 }
 
-int VCDromStatus(char DriveLetter)
-{
-    char                    VolumeName[] = "\\\\.\\ :";
-    HANDLE                  Device;
-    POPEN_FILE_INFORMATION  OpenFileInformation;
-    DWORD                   BytesReturned;
-
-    VolumeName[4] = DriveLetter;
-
-    Device = CreateFile(VolumeName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
-
-    if (Device == INVALID_HANDLE_VALUE)
-    {
-        PrintLastError(&VolumeName[4]);
-        return -1;
-    }
-
-    OpenFileInformation = malloc(sizeof(OPEN_FILE_INFORMATION) + MAX_PATH);
-
-    if (!DeviceIoControl(Device, IOCTL_VCDROM_QUERY_FILE, NULL, 0, OpenFileInformation, sizeof(OPEN_FILE_INFORMATION) + MAX_PATH, &BytesReturned, NULL))
-    {
-        PrintLastError(&VolumeName[4]);
-        CloseHandle(Device);
-        free(OpenFileInformation);
-        return -1;
-    }
-
-    if (BytesReturned < sizeof(OPEN_FILE_INFORMATION))
-    {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        PrintLastError(&VolumeName[4]);
-        CloseHandle(Device);
-        free(OpenFileInformation);
-        return -1;
-    }
-
-    CloseHandle(Device);
-
-    printf("%c: %.*s %I64u bytes%s\n", DriveLetter, OpenFileInformation->FileNameLength, OpenFileInformation->FileName, OpenFileInformation->FileSize, OpenFileInformation->ReadOnly ? " ro" : "");
-
-    free(OpenFileInformation);
-
-    return 0;
-}
-
 int __cdecl main(int argc, char* argv[])
 {
     char* Command;
@@ -217,30 +167,8 @@ int __cdecl main(int argc, char* argv[])
         strcat(OpenFileInformation->FileName, FileName);
 
         OpenFileInformation->FileNameLength = (USHORT) strlen(OpenFileInformation->FileName);
-
-        if (argc > 5)
-        {
-            Option = argv[4];
-            DriveLetter = argv[5][0];
-
-            if (!strcmp(Option, "/ro"))
-                OpenFileInformation->ReadOnly = TRUE;
-            else if (!strcmp(Option, "/cd"))
-                CdImage = TRUE;
-            else
-            {
-                if (Option[strlen(Option) - 1] == 'G')
-                    OpenFileInformation->FileSize.QuadPart = _atoi64(Option) * 1024 * 1024 * 1024;
-                else if (Option[strlen(Option) - 1] == 'M')
-                    OpenFileInformation->FileSize.QuadPart = _atoi64(Option) * 1024 * 1024;
-                else if (Option[strlen(Option) - 1] == 'k')
-                    OpenFileInformation->FileSize.QuadPart = _atoi64(Option) * 1024;
-                else
-                    OpenFileInformation->FileSize.QuadPart = _atoi64(Option);
-            }
-        }
-        else
-            DriveLetter = argv[4][0];
+		OpenFileInformation->ReadOnly = TRUE;
+		DriveLetter = argv[4][0];
         OpenFileInformation->DriveLetter = DriveLetter;
         DeviceNumber = atoi(argv[2]);
 		return VCDromMount(DeviceNumber, OpenFileInformation, CdImage);
@@ -250,10 +178,5 @@ int __cdecl main(int argc, char* argv[])
         DriveLetter = argv[2][0];
 		return VCDromUnmount(DriveLetter);
     }
-	else if (argc == 3 && !strcmp(Command, "/status"))
-	{
-		DriveLetter = argv[2][0];
-		return VCDromStatus(DriveLetter);
-	}
 	else PrintMenu();
 }
