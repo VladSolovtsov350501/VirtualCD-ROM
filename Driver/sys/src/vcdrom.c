@@ -44,34 +44,34 @@ typedef struct _DEVICE_EXTENSION {
 
 #ifdef NTDDI_VERSION
 DRIVER_INITIALIZE DriverEntry;
-__drv_dispatchType(IRP_MJ_CREATE) __drv_dispatchType(IRP_MJ_CLOSE) DRIVER_DISPATCH FileDiskCreateClose;
-__drv_dispatchType(IRP_MJ_READ) __drv_dispatchType(IRP_MJ_WRITE) DRIVER_DISPATCH FileDiskReadWrite;
-__drv_dispatchType(IRP_MJ_DEVICE_CONTROL) DRIVER_DISPATCH FileDiskDeviceControl;
-KSTART_ROUTINE FileDiskThread;
-DRIVER_UNLOAD FileDiskUnload;
+__drv_dispatchType(IRP_MJ_CREATE) __drv_dispatchType(IRP_MJ_CLOSE) DRIVER_DISPATCH VCDromCreateClose;
+__drv_dispatchType(IRP_MJ_READ) __drv_dispatchType(IRP_MJ_WRITE) DRIVER_DISPATCH VCDromReadWrite;
+__drv_dispatchType(IRP_MJ_DEVICE_CONTROL) DRIVER_DISPATCH VCDromDeviceControl;
+KSTART_ROUTINE VCDromThread;
+DRIVER_UNLOAD VCDromUnload;
 #endif // NTDDI_VERSION
 
-NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
+NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
-NTSTATUS FileDiskCreateDevice (IN PDRIVER_OBJECT DriverObject, IN ULONG Number, IN DEVICE_TYPE DeviceType);
+NTSTATUS VCDromCreateDevice(IN PDRIVER_OBJECT DriverObject, IN ULONG Number, IN DEVICE_TYPE DeviceType);
 
-VOID FileDiskUnload (IN PDRIVER_OBJECT DriverObject);
+VOID VCDromUnload(IN PDRIVER_OBJECT DriverObject);
 
-PDEVICE_OBJECT FileDiskDeleteDevice (IN PDEVICE_OBJECT DeviceObject);
+PDEVICE_OBJECT VCDromDeleteDevice(IN PDEVICE_OBJECT DeviceObject);
 
-NTSTATUS FileDiskCreateClose (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+NTSTATUS VCDromCreateClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-NTSTATUS FileDiskReadWrite (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+NTSTATUS VCDromReadWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+NTSTATUS VCDromDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-VOID FileDiskThread (IN PVOID Context);
+VOID VCDromThread(IN PVOID Context);
 
-NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+NTSTATUS VCDromOpenFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-NTSTATUS FileDiskCloseFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
+NTSTATUS VCDromCloseFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-NTSTATUS FileDiskAdjustPrivilege (IN ULONG Privilege, IN BOOLEAN Enable);
+NTSTATUS VCDromAdjustPrivilege(IN ULONG Privilege, IN BOOLEAN Enable);
 
 #pragma code_seg("INIT")
 
@@ -90,7 +90,7 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
 
     parameter_path.MaximumLength = RegistryPath->Length + sizeof(PARAMETER_KEY);
 
-    parameter_path.Buffer = (PWSTR) ExAllocatePoolWithTag(PagedPool, parameter_path.MaximumLength, FILE_DISK_POOL_TAG);
+    parameter_path.Buffer = (PWSTR) ExAllocatePoolWithTag(PagedPool, parameter_path.MaximumLength, VCDROM_POOL_TAG);
 
     if (parameter_path.Buffer == NULL)
     {
@@ -113,7 +113,7 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
 
     if (!NT_SUCCESS(status))
     {
-        DbgPrint("FileDisk: Query registry failed, using default values.\n");
+        DbgPrint("VCDrom: Query registry failed, using default values.\n");
         n_devices = DEFAULT_NUMBEROFDEVICES;
     }
 
@@ -130,7 +130,7 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
 
     for (n = 0, n_created_devices = 0; n < n_devices; n++)
     {
-        status = FileDiskCreateDevice(DriverObject, n, FILE_DEVICE_DISK);
+		status = VCDromCreateDevice(DriverObject, n, FILE_DEVICE_DISK);
 
         if (NT_SUCCESS(status))
             n_created_devices++;
@@ -138,7 +138,7 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
 
     for (n = 0; n < n_devices; n++)
     {
-        status = FileDiskCreateDevice(DriverObject, n, FILE_DEVICE_CD_ROM);
+		status = VCDromCreateDevice(DriverObject, n, FILE_DEVICE_CD_ROM);
 
         if (NT_SUCCESS(status))
             n_created_devices++;
@@ -150,18 +150,18 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
         return status;
     }
 
-    DriverObject->MajorFunction[IRP_MJ_CREATE]         = FileDiskCreateClose;
-    DriverObject->MajorFunction[IRP_MJ_CLOSE]          = FileDiskCreateClose;
-    DriverObject->MajorFunction[IRP_MJ_READ]           = FileDiskReadWrite;
-    DriverObject->MajorFunction[IRP_MJ_WRITE]          = FileDiskReadWrite;
-    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = FileDiskDeviceControl;
+	DriverObject->MajorFunction[IRP_MJ_CREATE] = VCDromCreateClose;
+	DriverObject->MajorFunction[IRP_MJ_CLOSE] = VCDromCreateClose;
+	DriverObject->MajorFunction[IRP_MJ_READ] = VCDromReadWrite;
+	DriverObject->MajorFunction[IRP_MJ_WRITE] = VCDromReadWrite;
+	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = VCDromDeviceControl;
 
-    DriverObject->DriverUnload = FileDiskUnload;
+	DriverObject->DriverUnload = VCDromUnload;
 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS FileDiskCreateDevice (IN PDRIVER_OBJECT DriverObject, IN ULONG Number, IN DEVICE_TYPE DeviceType)
+NTSTATUS VCDromCreateDevice(IN PDRIVER_OBJECT DriverObject, IN ULONG Number, IN DEVICE_TYPE DeviceType)
 {
     UNICODE_STRING device_name;
     NTSTATUS status;
@@ -172,7 +172,7 @@ NTSTATUS FileDiskCreateDevice (IN PDRIVER_OBJECT DriverObject, IN ULONG Number, 
 
     ASSERT(DriverObject != NULL);
 
-    device_name.Buffer = (PWCHAR) ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, FILE_DISK_POOL_TAG);
+    device_name.Buffer = (PWCHAR) ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, VCDROM_POOL_TAG);
 
     if (device_name.Buffer == NULL)
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -221,7 +221,7 @@ NTSTATUS FileDiskCreateDevice (IN PDRIVER_OBJECT DriverObject, IN ULONG Number, 
 
     device_extension->terminate_thread = FALSE;
 
-    status = PsCreateSystemThread(&thread_handle, (ACCESS_MASK) 0L, NULL, NULL, NULL, FileDiskThread, device_object);
+	status = PsCreateSystemThread(&thread_handle, (ACCESS_MASK)0L, NULL, NULL, NULL, VCDromThread, device_object);
 
     if (!NT_SUCCESS(status))
     {
@@ -254,7 +254,7 @@ NTSTATUS FileDiskCreateDevice (IN PDRIVER_OBJECT DriverObject, IN ULONG Number, 
 
 #pragma code_seg("PAGE")
 
-VOID FileDiskUnload (IN PDRIVER_OBJECT DriverObject )
+VOID VCDromUnload(IN PDRIVER_OBJECT DriverObject)
 {
     PDEVICE_OBJECT device_object;
 
@@ -263,7 +263,7 @@ VOID FileDiskUnload (IN PDRIVER_OBJECT DriverObject )
     device_object = DriverObject->DeviceObject;
 
     while (device_object)
-        device_object = FileDiskDeleteDevice(device_object);
+		device_object = VCDromDeleteDevice(device_object);
 
     ZwClose(dir_handle);
 }
@@ -273,7 +273,7 @@ VOID FileDiskUnload (IN PDRIVER_OBJECT DriverObject )
 #pragma warning(disable:28175)
 #endif // NTDDI_VERSION
 
-PDEVICE_OBJECT FileDiskDeleteDevice (IN PDEVICE_OBJECT DeviceObject)
+PDEVICE_OBJECT VCDromDeleteDevice(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVICE_EXTENSION   device_extension;
     PDEVICE_OBJECT      next_device_object;
@@ -312,7 +312,7 @@ PDEVICE_OBJECT FileDiskDeleteDevice (IN PDEVICE_OBJECT DeviceObject)
 #pragma warning(pop)
 #endif // NTDDI_VERSION
 
-NTSTATUS FileDiskCreateClose (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS VCDromCreateClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PAGED_CODE();
 
@@ -326,7 +326,7 @@ NTSTATUS FileDiskCreateClose (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 #pragma code_seg() // end "PAGE"
 
-NTSTATUS FileDiskReadWrite (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS VCDromReadWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PDEVICE_EXTENSION   device_extension;
     PIO_STACK_LOCATION  io_stack;
@@ -364,7 +364,7 @@ NTSTATUS FileDiskReadWrite (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     return STATUS_PENDING;
 }
 
-NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS VCDromDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PDEVICE_EXTENSION   device_extension;
     PIO_STACK_LOCATION  io_stack;
@@ -374,7 +374,7 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     io_stack = IoGetCurrentIrpStackLocation(Irp);
 
-    if (!device_extension->media_in_device && io_stack->Parameters.DeviceIoControl.IoControlCode != IOCTL_FILE_DISK_OPEN_FILE)
+    if (!device_extension->media_in_device && io_stack->Parameters.DeviceIoControl.IoControlCode != IOCTL_VCDROM_OPEN_FILE)
     {
         Irp->IoStatus.Status = STATUS_NO_MEDIA_IN_DEVICE;
         Irp->IoStatus.Information = 0;
@@ -386,13 +386,13 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     switch (io_stack->Parameters.DeviceIoControl.IoControlCode)
     {
-    case IOCTL_FILE_DISK_OPEN_FILE:
+    case IOCTL_VCDROM_OPEN_FILE:
         {
             SECURITY_QUALITY_OF_SERVICE security_quality_of_service;
 
             if (device_extension->media_in_device)
             {
-                KdPrint(("FileDisk: IOCTL_FILE_DISK_OPEN_FILE: Media already opened.\n"));
+                KdPrint(("VCDrom: IOCTL_VCDROM_OPEN_FILE: Media already opened.\n"));
 
                 status = STATUS_INVALID_DEVICE_REQUEST;
                 Irp->IoStatus.Information = 0;
@@ -421,7 +421,7 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
             }
             else
             {
-                device_extension->security_client_context = ExAllocatePoolWithTag(NonPagedPool, sizeof(SECURITY_CLIENT_CONTEXT), FILE_DISK_POOL_TAG);
+                device_extension->security_client_context = ExAllocatePoolWithTag(NonPagedPool, sizeof(SECURITY_CLIENT_CONTEXT), VCDROM_POOL_TAG);
             }
 
             RtlZeroMemory(&security_quality_of_service, sizeof(SECURITY_QUALITY_OF_SERVICE));
@@ -444,7 +444,7 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
             break;
         }
 
-    case IOCTL_FILE_DISK_CLOSE_FILE:
+    case IOCTL_VCDROM_CLOSE_FILE:
         {
             IoMarkIrpPending(Irp);
 
@@ -457,7 +457,7 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
             break;
         }
 
-    case IOCTL_FILE_DISK_QUERY_FILE:
+    case IOCTL_VCDROM_QUERY_FILE:
         {
             POPEN_FILE_INFORMATION open_file_information;
 
@@ -868,49 +868,49 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     case IOCTL_CDROM_READ_TOC_EX:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_CDROM_READ_TOC_EX.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_CDROM_READ_TOC_EX.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case IOCTL_DISK_GET_MEDIA_TYPES:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_DISK_GET_MEDIA_TYPES.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_DISK_GET_MEDIA_TYPES.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case FT_BALANCED_READ_MODE:
         {
-            KdPrint(("FileDisk: Unhandled ioctl FT_BALANCED_READ_MODE.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl FT_BALANCED_READ_MODE.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case IOCTL_SCSI_GET_CAPABILITIES:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_SCSI_GET_CAPABILITIES.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_SCSI_GET_CAPABILITIES.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case IOCTL_SCSI_PASS_THROUGH:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_SCSI_PASS_THROUGH.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_SCSI_PASS_THROUGH.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_STORAGE_MANAGE_DATA_SET_ATTRIBUTES.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     case IOCTL_STORAGE_QUERY_PROPERTY:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_STORAGE_QUERY_PROPERTY.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_STORAGE_QUERY_PROPERTY.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
@@ -922,14 +922,14 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     case IOCTL_VOLUME_QUERY_ALLOCATION_HINT:
         {
-            KdPrint(("FileDisk: Unhandled ioctl IOCTL_VOLUME_QUERY_ALLOCATION_HINT.\n"));
+            KdPrint(("VCDrom: Unhandled ioctl IOCTL_VOLUME_QUERY_ALLOCATION_HINT.\n"));
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
             break;
         }
     default:
         {
-            KdPrint(("FileDisk: Unknown IoControlCode %#x\n", io_stack->Parameters.DeviceIoControl.IoControlCode ));
+            KdPrint(("VCDrom: Unknown IoControlCode %#x\n", io_stack->Parameters.DeviceIoControl.IoControlCode ));
 
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Information = 0;
@@ -948,7 +948,7 @@ NTSTATUS FileDiskDeviceControl (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 #pragma code_seg("PAGE")
 
-VOID FileDiskThread (IN PVOID Context)
+VOID VCDromThread(IN PVOID Context)
 {
     PDEVICE_OBJECT device_object;
     PDEVICE_EXTENSION device_extension;
@@ -968,7 +968,7 @@ VOID FileDiskThread (IN PVOID Context)
 
     KeSetPriorityThread(KeGetCurrentThread(), LOW_REALTIME_PRIORITY);
 
-    FileDiskAdjustPrivilege(SE_IMPERSONATE_PRIVILEGE, TRUE);
+	VCDromAdjustPrivilege(SE_IMPERSONATE_PRIVILEGE, TRUE);
 
     for (;;)
     {
@@ -993,7 +993,7 @@ VOID FileDiskThread (IN PVOID Context)
                     irp->IoStatus.Information = 0;
                     break;
                 }
-                buffer = (PUCHAR) ExAllocatePoolWithTag(PagedPool, io_stack->Parameters.Read.Length, FILE_DISK_POOL_TAG);
+                buffer = (PUCHAR) ExAllocatePoolWithTag(PagedPool, io_stack->Parameters.Read.Length, VCDROM_POOL_TAG);
                 if (buffer == NULL)
                 {
                     irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -1018,18 +1018,18 @@ VOID FileDiskThread (IN PVOID Context)
             case IRP_MJ_DEVICE_CONTROL:
                 switch (io_stack->Parameters.DeviceIoControl.IoControlCode)
                 {
-                case IOCTL_FILE_DISK_OPEN_FILE:
+                case IOCTL_VCDROM_OPEN_FILE:
 
                     SeImpersonateClient(device_extension->security_client_context, NULL);
 
-                    irp->IoStatus.Status = FileDiskOpenFile(device_object, irp);
+					irp->IoStatus.Status = VCDromOpenFile(device_object, irp);
 
                     PsRevertToSelf();
 
                     break;
 
-                case IOCTL_FILE_DISK_CLOSE_FILE:
-                    irp->IoStatus.Status = FileDiskCloseFile(device_object, irp);
+                case IOCTL_VCDROM_CLOSE_FILE:
+					irp->IoStatus.Status = VCDromCloseFile(device_object, irp);
                     break;
 
                 default:
@@ -1046,7 +1046,7 @@ VOID FileDiskThread (IN PVOID Context)
     }
 }
 
-NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS VCDromOpenFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PDEVICE_EXTENSION device_extension;
     POPEN_FILE_INFORMATION open_file_information;
@@ -1072,7 +1072,7 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     device_extension->file_name.Length = open_file_information->FileNameLength;
     device_extension->file_name.MaximumLength = open_file_information->FileNameLength;
-    device_extension->file_name.Buffer = ExAllocatePoolWithTag(NonPagedPool, open_file_information->FileNameLength, FILE_DISK_POOL_TAG);
+    device_extension->file_name.Buffer = ExAllocatePoolWithTag(NonPagedPool, open_file_information->FileNameLength, VCDROM_POOL_TAG);
 
     RtlCopyMemory(device_extension->file_name.Buffer, open_file_information->FileName, open_file_information->FileNameLength);
 
@@ -1106,13 +1106,13 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         );
 
     if (NT_SUCCESS(status))
-        KdPrint(("FileDisk: File %.*S opened.\n", ufile_name.Length / 2, ufile_name.Buffer));
+        KdPrint(("VCDrom: File %.*S opened.\n", ufile_name.Length / 2, ufile_name.Buffer));
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_NO_SUCH_FILE)
     {
         if (device_extension->read_only || open_file_information->FileSize.QuadPart == 0)
         {
-            DbgPrint("FileDisk: File %.*S not found.\n", ufile_name.Length / 2, ufile_name.Buffer);
+            DbgPrint("VCDrom: File %.*S not found.\n", ufile_name.Length / 2, ufile_name.Buffer);
             ExFreePool(device_extension->file_name.Buffer);
             RtlFreeUnicodeString(&ufile_name);
 
@@ -1142,7 +1142,7 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
             if (!NT_SUCCESS(status))
             {
-                DbgPrint("FileDisk: File %.*S could not be created.\n", ufile_name.Length / 2, ufile_name.Buffer);
+                DbgPrint("VCDrom: File %.*S could not be created.\n", ufile_name.Length / 2, ufile_name.Buffer);
                 ExFreePool(device_extension->file_name.Buffer);
                 RtlFreeUnicodeString(&ufile_name);
                 return status;
@@ -1150,12 +1150,12 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
             if (Irp->IoStatus.Information == FILE_CREATED)
             {
-                KdPrint(("FileDisk: File %.*S created.\n", ufile_name.Length / 2, ufile_name.Buffer));
+                KdPrint(("VCDrom: File %.*S created.\n", ufile_name.Length / 2, ufile_name.Buffer));
                 status = ZwFsControlFile(device_extension->file_handle, NULL, NULL, NULL, &Irp->IoStatus, FSCTL_SET_SPARSE, NULL, 0, NULL, 0);
 
                 if (NT_SUCCESS(status))
                 {
-                    KdPrint(("FileDisk: File attributes set to sparse.\n"));
+                    KdPrint(("VCDrom: File attributes set to sparse.\n"));
                 }
 
                 file_eof.EndOfFile.QuadPart = open_file_information->FileSize.QuadPart;
@@ -1164,19 +1164,19 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
                 if (!NT_SUCCESS(status))
                 {
-                    DbgPrint("FileDisk: eof could not be set.\n");
+                    DbgPrint("VCDrom: eof could not be set.\n");
                     ExFreePool(device_extension->file_name.Buffer);
                     RtlFreeUnicodeString(&ufile_name);
                     ZwClose(device_extension->file_handle);
                     return status;
                 }
-                KdPrint(("FileDisk: eof set to %I64u.\n", file_eof.EndOfFile));
+                KdPrint(("VCDrom: eof set to %I64u.\n", file_eof.EndOfFile));
             }
         }
     }
     else if (!NT_SUCCESS(status))
     {
-        DbgPrint("FileDisk: File %.*S could not be opened.\n", ufile_name.Length / 2, ufile_name.Buffer);
+        DbgPrint("VCDrom: File %.*S could not be opened.\n", ufile_name.Length / 2, ufile_name.Buffer);
         ExFreePool(device_extension->file_name.Buffer);
         RtlFreeUnicodeString(&ufile_name);
         return status;
@@ -1194,7 +1194,7 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     }
 
     if (file_basic.FileAttributes & (FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_ENCRYPTED))
-        DbgPrint("FileDisk: Warning: File is compressed or encrypted. File attributes: %#x.\n", file_basic.FileAttributes);
+        DbgPrint("VCDrom: Warning: File is compressed or encrypted. File attributes: %#x.\n", file_basic.FileAttributes);
 
     status = ZwQueryInformationFile(device_extension->file_handle, &Irp->IoStatus, &file_standard, sizeof(FILE_STANDARD_INFORMATION), FileStandardInformation);
 
@@ -1231,7 +1231,7 @@ NTSTATUS FileDiskOpenFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS FileDiskCloseFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+NTSTATUS VCDromCloseFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PDEVICE_EXTENSION device_extension;
 
@@ -1254,7 +1254,7 @@ NTSTATUS FileDiskCloseFile (IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS FileDiskAdjustPrivilege (IN ULONG Privilege, IN BOOLEAN Enable)
+NTSTATUS VCDromAdjustPrivilege(IN ULONG Privilege, IN BOOLEAN Enable)
 {
     NTSTATUS status;
     HANDLE token_handle;

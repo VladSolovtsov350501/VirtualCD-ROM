@@ -13,9 +13,9 @@
 void PrintMenu()
 {
     fprintf(stderr, "Menu:\n");
-    fprintf(stderr, "filedisk /mount  <devicenumber> <filename> [size[k|M|G] | /ro | /cd] <drive:>\n");
-    fprintf(stderr, "filedisk /unmount <drive:>\n");
-    fprintf(stderr, "filedisk /status <drive:>\n");
+    fprintf(stderr, "vcdrom /mount  <devicenumber> <filename> [size[k|M|G] | /ro | /cd] <drive:>\n");
+    fprintf(stderr, "vcdrom /unmount <drive:>\n");
+    fprintf(stderr, "vcdrom /status <drive:>\n");
     fprintf(stderr, "\n");
 }
 
@@ -30,7 +30,7 @@ void PrintLastError(char* Prefix)
     LocalFree(lpMsgBuf);
 }
 
-int FileDiskMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BOOLEAN CdImage)
+int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BOOLEAN CdImage)
 {
     char    VolumeName[] = "\\\\.\\ :";
     char    DriveName[] = " :\\";
@@ -71,9 +71,9 @@ int FileDiskMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, 
         return -1;
     }
 
-    if (!DeviceIoControl(Device, IOCTL_FILE_DISK_OPEN_FILE, OpenFileInformation, sizeof(OPEN_FILE_INFORMATION) + OpenFileInformation->FileNameLength - 1, NULL, 0, &BytesReturned, NULL))
+    if (!DeviceIoControl(Device, IOCTL_VCDROM_OPEN_FILE, OpenFileInformation, sizeof(OPEN_FILE_INFORMATION) + OpenFileInformation->FileNameLength - 1, NULL, 0, &BytesReturned, NULL))
     {
-        PrintLastError("FileDisk:");
+        PrintLastError("VirtualCDRom:");
         DefineDosDevice(DDD_REMOVE_DEFINITION, &VolumeName[4], NULL);
         CloseHandle(Device);
         return -1;
@@ -86,7 +86,7 @@ int FileDiskMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, 
     return 0;
 }
 
-int FileDiskUmount(char DriveLetter)
+int VCDromUnmount(char DriveLetter)
 {
     char    VolumeName[] = "\\\\.\\ :";
     char    DriveName[] = " :\\";
@@ -111,9 +111,9 @@ int FileDiskUmount(char DriveLetter)
         return -1;
     }
 
-    if (!DeviceIoControl(Device, IOCTL_FILE_DISK_CLOSE_FILE, NULL, 0, NULL, 0, &BytesReturned, NULL))
+    if (!DeviceIoControl(Device, IOCTL_VCDROM_CLOSE_FILE, NULL, 0, NULL, 0, &BytesReturned, NULL))
     {
-        PrintLastError("FileDisk:");
+        PrintLastError("VirtualCDRom:");
         CloseHandle(Device);
         return -1;
     }
@@ -145,7 +145,7 @@ int FileDiskUmount(char DriveLetter)
     return 0;
 }
 
-int FileDiskStatus(char DriveLetter)
+int VCDromStatus(char DriveLetter)
 {
     char                    VolumeName[] = "\\\\.\\ :";
     HANDLE                  Device;
@@ -164,7 +164,7 @@ int FileDiskStatus(char DriveLetter)
 
     OpenFileInformation = malloc(sizeof(OPEN_FILE_INFORMATION) + MAX_PATH);
 
-    if (!DeviceIoControl(Device, IOCTL_FILE_DISK_QUERY_FILE, NULL, 0, OpenFileInformation, sizeof(OPEN_FILE_INFORMATION) + MAX_PATH, &BytesReturned, NULL))
+    if (!DeviceIoControl(Device, IOCTL_VCDROM_QUERY_FILE, NULL, 0, OpenFileInformation, sizeof(OPEN_FILE_INFORMATION) + MAX_PATH, &BytesReturned, NULL))
     {
         PrintLastError(&VolumeName[4]);
         CloseHandle(Device);
@@ -243,17 +243,17 @@ int __cdecl main(int argc, char* argv[])
             DriveLetter = argv[4][0];
         OpenFileInformation->DriveLetter = DriveLetter;
         DeviceNumber = atoi(argv[2]);
-        return FileDiskMount(DeviceNumber, OpenFileInformation, CdImage);
+		return VCDromMount(DeviceNumber, OpenFileInformation, CdImage);
     }
     else if (argc == 3 && !strcmp(Command, "/unmount"))
     {
         DriveLetter = argv[2][0];
-        return FileDiskUmount(DriveLetter);
+		return VCDromUnmount(DriveLetter);
     }
 	else if (argc == 3 && !strcmp(Command, "/status"))
 	{
 		DriveLetter = argv[2][0];
-		return FileDiskStatus(DriveLetter);
+		return VCDromStatus(DriveLetter);
 	}
 	else PrintMenu();
 }
