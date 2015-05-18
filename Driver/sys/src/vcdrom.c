@@ -90,7 +90,6 @@ NTSTATUS DriverEntry (IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registr
     ExFreePool(parameter_path.Buffer);
     if (!NT_SUCCESS(status))
     {
-        DbgPrint("VCDrom: Query registry failed, using default values.\n");
         n_devices = DEFAULT_NUMBEROFDEVICES;
     }
 
@@ -141,8 +140,7 @@ NTSTATUS VCDromCreateDevice(IN PDRIVER_OBJECT DriverObject, IN ULONG Number, IN 
     ASSERT(DriverObject != NULL);
 
     device_name.Buffer = (PWCHAR) ExAllocatePoolWithTag(PagedPool, MAXIMUM_FILENAME_LENGTH * 2, VCDROM_POOL_TAG);
-    if (device_name.Buffer == NULL)
-        return STATUS_INSUFFICIENT_RESOURCES;
+    if (device_name.Buffer == NULL) return STATUS_INSUFFICIENT_RESOURCES;
     device_name.Length = 0;
     device_name.MaximumLength = MAXIMUM_FILENAME_LENGTH * 2;
 
@@ -936,10 +934,7 @@ NTSTATUS VCDromOpenFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
         FILE_ATTRIBUTE_NORMAL,
         device_extension->read_only ? FILE_SHARE_READ : 0,
         FILE_OPEN,
-        FILE_NON_DIRECTORY_FILE |
-        FILE_RANDOM_ACCESS |
-        FILE_NO_INTERMEDIATE_BUFFERING |
-        FILE_SYNCHRONOUS_IO_NONALERT,
+        FILE_NON_DIRECTORY_FILE | FILE_RANDOM_ACCESS | FILE_NO_INTERMEDIATE_BUFFERING | FILE_SYNCHRONOUS_IO_NONALERT,
         NULL,
         0
         );
@@ -966,10 +961,7 @@ NTSTATUS VCDromOpenFile(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
                 FILE_ATTRIBUTE_NORMAL,
                 0,
                 FILE_OPEN_IF,
-                FILE_NON_DIRECTORY_FILE |
-                FILE_RANDOM_ACCESS |
-                FILE_NO_INTERMEDIATE_BUFFERING |
-                FILE_SYNCHRONOUS_IO_NONALERT,
+				FILE_NON_DIRECTORY_FILE | FILE_RANDOM_ACCESS | FILE_NO_INTERMEDIATE_BUFFERING | FILE_SYNCHRONOUS_IO_NONALERT,
                 NULL,
                 0
                 );
