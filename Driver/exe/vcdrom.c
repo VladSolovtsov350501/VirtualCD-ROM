@@ -29,7 +29,7 @@ void PrintLastError(char* Prefix)
     LocalFree(lpMsgBuf);
 }
 
-int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BOOLEAN CdImage)
+int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation)
 {
     char    VolumeName[] = "\\\\.\\ :";
     char    DriveName[] = " :\\";
@@ -57,8 +57,7 @@ int VCDromMount(int DeviceNumber, POPEN_FILE_INFORMATION OpenFileInformation, BO
         return -1;
     }
 
-    Device = CreateFile(VolumeName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
-
+    Device = CreateFile(VolumeName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);	é
     if (Device == INVALID_HANDLE_VALUE)
     {
         PrintLastError(&VolumeName[4]);
@@ -92,7 +91,6 @@ int VCDromUnmount(char DriveLetter)
     DriveName[0] = DriveLetter;
 
     Device = CreateFile(VolumeName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
-
     if (Device == INVALID_HANDLE_VALUE)
     {
         PrintLastError(&VolumeName[4]);
@@ -147,12 +145,11 @@ int __cdecl main(int argc, char* argv[])
     char* FileName;
     char* Option;
     char DriveLetter;
-    BOOLEAN CdImage = FALSE;
     POPEN_FILE_INFORMATION OpenFileInformation;
 
     Command = argv[1];
 
-    if ((argc == 5 || argc == 6) && !strcmp(Command, "/mount"))
+    if (!strcmp(Command, "/mount"))
     {
         FileName = argv[3];
 
@@ -160,7 +157,6 @@ int __cdecl main(int argc, char* argv[])
 			PrintMenu();
 
         OpenFileInformation = malloc(sizeof(OPEN_FILE_INFORMATION) + strlen(FileName) + 7);
-
         memset(OpenFileInformation, 0, sizeof(OPEN_FILE_INFORMATION) + strlen(FileName) + 7);
 
 		strcpy(OpenFileInformation->FileName, "\\??\\");
@@ -171,7 +167,7 @@ int __cdecl main(int argc, char* argv[])
 		DriveLetter = argv[4][0];
         OpenFileInformation->DriveLetter = DriveLetter;
         DeviceNumber = atoi(argv[2]);
-		return VCDromMount(DeviceNumber, OpenFileInformation, CdImage);
+		return VCDromMount(DeviceNumber, OpenFileInformation);
     }
     else if (argc == 3 && !strcmp(Command, "/unmount"))
     {
